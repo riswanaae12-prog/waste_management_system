@@ -1,11 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../providers/auth_provider.dart';
 import '../edit_profile_screen.dart';
 
-class CitizenProfileView extends StatelessWidget {
+class CitizenProfileView extends StatefulWidget {
   const CitizenProfileView({Key? key}) : super(key: key);
+
+  @override
+  State<CitizenProfileView> createState() => _CitizenProfileViewState();
+}
+
+class _CitizenProfileViewState extends State<CitizenProfileView> {
+  String _version = '...';
+
+  @override
+  void initState() {
+    super.initState();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = info.version; // Only display the version name
+    });
+  }
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
     final picker = ImagePicker();
@@ -134,6 +155,14 @@ class CitizenProfileView extends StatelessWidget {
                       );
                     },
                     child: const Text('Edit Profile'),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                Text(
+                  'Version $_version',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
                   ),
                 ),
               ],

@@ -2,7 +2,7 @@ name: smart_waste_management
 description: "A smart waste management system mobile application with dual login, real-time notifications, and bin tracking."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.0.2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -32,6 +32,8 @@ dependencies:
   flutter_dotenv: any
   web3dart: any
   url_launcher: ^6.0.0 # Added url_launcher
+  package_info_plus: any
+  geocoding: any
 
 dev_dependencies:
   flutter_test:

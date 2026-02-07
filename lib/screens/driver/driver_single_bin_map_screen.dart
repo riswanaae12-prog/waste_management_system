@@ -18,18 +18,16 @@ class _DriverSingleBinMapScreenState extends State<DriverSingleBinMapScreen> {
   Future<void> _launchGoogleMaps() async {
     final lat = widget.bin.latitude;
     final lng = widget.bin.longitude;
-    // Create a URL for Google Maps with the destination coordinates and navigation mode.
-    final url = 'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving';
-    final uri = Uri.parse(url);
+
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
 
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
     } else {
-      // Handle the case where the user doesn't have Google Maps installed.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not launch Google Maps. Please ensure it is installed.'),
+            content: Text('Could not launch a map application. Please ensure one is installed.'),
           ),
         );
       }

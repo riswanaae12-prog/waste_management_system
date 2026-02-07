@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/user.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   User? _user;
   bool _isLoading = true;
   bool _isAuthenticated = false;
@@ -25,14 +26,12 @@ class AuthProvider extends ChangeNotifier {
   void _initializeAuth() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
-      // Always log out any existing user on app start.
       await _authService.logoutUser();
       _user = null;
       _isAuthenticated = false;
     } catch (e) {
-      print("Error during initial logout: $e"); // Debug print
       _error = e.toString();
       _isAuthenticated = false;
     } finally {
@@ -64,15 +63,12 @@ class AuthProvider extends ChangeNotifier {
       if (user != null) {
         _user = user;
         _isAuthenticated = true;
-        notifyListeners();
         return null; // Success
       }
       return "An unknown error occurred during registration.";
     } catch (e) {
-      print("Registration error: $e"); // Debug print
       _error = e.toString();
-      notifyListeners();
-      return _error; // Failure, return the error message
+      return _error; // Failure
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -98,21 +94,17 @@ class AuthProvider extends ChangeNotifier {
       if (user != null) {
         _user = user;
         _isAuthenticated = true;
-        notifyListeners();
         return null; // Success
       }
-       return "An unknown error occurred after login.";
+      return "An unknown error occurred after login.";
     } catch (e) {
-      print("Login error: $e"); // Debug print
       _error = e.toString();
-      notifyListeners();
-      return _error; // Failure, return the error message
+      return _error; // Failure
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
-
 
   Future<bool> logout() async {
     try {
@@ -156,17 +148,6 @@ class AuthProvider extends ChangeNotifier {
         age: age,
       );
       notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> resetPassword(String email) async {
-    try {
-      await _authService.resetPassword(email);
       return true;
     } catch (e) {
       _error = e.toString();

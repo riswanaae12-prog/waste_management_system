@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/bin.dart';
@@ -47,7 +48,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     super.dispose();
   }
 
-  void _submitIssue() async {
+  Future<void> _submitIssue() async {
     if (_formKey.currentState!.validate()) {
       if (!_isOtherLocation && _selectedBin == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,54 +76,64 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         return;
       }
 
-      Bin binToReport;
-      if (_isOtherLocation) {
-        final newBin = Bin(
-          id: _binIdController.text,
-          location: _otherLocationController.text,
-          latitude: 0.0,
-          longitude: 0.0,
-          status: _issueType == 'bin_full' ? 'full' : 'available',
-          fillLevel: _issueType == 'bin_full' ? 100.0 : 0.0,
-          wasteType: 'general',
-          capacity: 100.0,
-          lastEmptied: DateTime.now(),
-          lastUpdated: DateTime.now(),
-        );
-        await binProvider.addBin(newBin);
-        binToReport = newBin;
-      } else {
-        binToReport = _selectedBin!;
-        if (_issueType == 'bin_full') {
-          final updatedBin =
-              binToReport.copyWith(status: 'full', fillLevel: 100.0);
-          await binProvider.updateBin(updatedBin);
+      try {
+        Bin binToReport;
+        if (_isOtherLocation) {
+          List<Location> locations = await locationFromAddress(_otherLocationController.text);
+          if (locations.isEmpty) {
+            throw Exception('Could not determine location from the address.');
+          }
+          Location location = locations.first;
+
+          final newBin = Bin(
+            id: _binIdController.text,
+            location: _otherLocationController.text,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            status: _issueType == 'bin_full' ? 'full' : 'available',
+            fillLevel: _issueType == 'bin_full' ? 100.0 : 0.0,
+            wasteType: 'general',
+            capacity: 100.0,
+            lastEmptied: DateTime.now(),
+            lastUpdated: DateTime.now(),
+          );
+          await binProvider.addBin(newBin);
+          binToReport = newBin;
+        } else {
+          binToReport = _selectedBin!;
+          if (_issueType == 'bin_full') {
+            final updatedBin =
+                binToReport.copyWith(status: 'full', fillLevel: 100.0);
+            await binProvider.updateBin(updatedBin);
+          }
         }
-      }
 
-      String description = _issueType == 'general'
-          ? _issueDescriptionController.text
-          : _selectedDescription ?? '';
+        String description = _issueType == 'general'
+            ? _issueDescriptionController.text
+            : _selectedDescription ?? '';
 
-      final success = await issueProvider.createIssue(
-        userId: authProvider.user!.id,
-        binId: binToReport.id,
-        title: _issueType == 'bin_full' ? 'Bin Full' : 'General Issue',
-        description: description,
-        issueType: _issueType,
-        imageUrls: [],
-      );
-
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      if (success) {
-        Navigator.of(context).pop(true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to report issue. Please try again.')),
+        final success = await issueProvider.createIssue(
+          userId: authProvider.user!.id,
+          binId: binToReport.id,
+          title: _issueType == 'bin_full' ? 'Bin Full' : 'General Issue',
+          description: description,
+          issueType: _issueType,
+          imageUrls: [],
         );
+
+        if (success) {
+          Navigator.of(context).pop(true);
+        } else {
+          throw Exception('Failed to report issue. Please try again.');
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      } finally {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }
@@ -191,7 +202,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                                 controller: _otherLocationController,
                                 decoration: const InputDecoration(
                                   labelText: 'Location Name',
-                                  hintText: 'Enter a name for the new location',
+                                  hintText: 'Enter a full address for accurate location',
                                 ),
                                 validator: (value) => value!.isEmpty
                                     ? 'Please enter a location name'

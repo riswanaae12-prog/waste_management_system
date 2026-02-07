@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user.dart';
@@ -60,12 +61,11 @@ class AuthService {
           if (user.userType == userType) {
             return user;
           } else {
-            // Sign the user out as they have the wrong role
             await _firebaseAuth.signOut();
             throw Exception('Access Denied: Incorrect user role.');
           }
         }
-        return null; // Should not happen if user is authenticated
+        return null;
       }
       return null;
     } on firebase_auth.FirebaseAuthException catch (e) {
@@ -116,14 +116,6 @@ class AuthService {
       await _firestore.collection('users').doc(userId).update(updateData);
     } catch (e) {
       throw Exception('Failed to update profile: $e');
-    }
-  }
-
-  Future<void> resetPassword(String email) async {
-    try {
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
-    } catch (e) {
-      throw Exception('Failed to reset password: $e');
     }
   }
 }
