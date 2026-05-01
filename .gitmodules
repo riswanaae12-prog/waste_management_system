@@ -1,0 +1,3 @@
+[submodule "external/waste-management-project"]
+	path = external/waste-management-project
+	url = https://github.com/riswanaae12-prog/waste_management_project.git
